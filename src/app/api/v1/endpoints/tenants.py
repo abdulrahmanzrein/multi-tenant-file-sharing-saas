@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -10,7 +11,7 @@ def create_tenant():
 
 
 @router.get("/{tenant_id}")
-def get_tenant(tenant_id: int):
+def get_tenant(tenant_id: UUID):
     """Get tenant by ID"""
     return {"message": f"Get tenant {tenant_id} - TODO"}
 

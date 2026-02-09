@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -10,19 +11,19 @@ def upload_file():
 
 
 @router.get("/{file_id}")
-def get_file(file_id: int):
+def get_file(file_id: UUID):
     """Get file metadata"""
     return {"message": f"Get file {file_id} - TODO"}
 
 
 @router.get("/{file_id}/download")
-def download_file(file_id: int):
+def download_file(file_id: UUID):
     """Download a file"""
     return {"message": f"Download file {file_id} - TODO"}
 
 
 @router.delete("/{file_id}")
-def delete_file(file_id: int):
+def delete_file(file_id: UUID):
     """Delete a file"""
     return {"message": f"Delete file {file_id} - TODO"}
 
