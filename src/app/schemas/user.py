@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
@@ -22,3 +23,9 @@ class UserRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# What can a user update about themselves?
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
