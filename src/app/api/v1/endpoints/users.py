@@ -34,7 +34,6 @@ def update_me(updates: UserUpdate, user: User = Depends(get_current_user), db: S
     
 
 
-
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 def delete_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete current user account"""

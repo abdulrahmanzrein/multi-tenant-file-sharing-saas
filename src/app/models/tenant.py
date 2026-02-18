@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, Integer
+from sqlalchemy import Column, String, Boolean, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -16,8 +16,8 @@ class Tenant(TimestampMixin, Base):
     is_active = Column(Boolean, default=True)
 
     # each tenant gets a storage limit in bytes (default 5GB)
-    storage_limit = Column(Integer, default=5368709120)
-    storage_used = Column(Integer, default=0)
+    storage_limit = Column(BigInteger, default=5368709120)
+    storage_used = Column(BigInteger, default=0)
 
     # a tenant has many users and many files
     users = relationship("User", back_populates="tenant")

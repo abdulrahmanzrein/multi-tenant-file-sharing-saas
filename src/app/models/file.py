@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
+from sqlalchemy import Column, String, BigInteger, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -22,7 +22,7 @@ class File(TimestampMixin, Base):
     content_type = Column(String(100), nullable=False)
 
     # file size in bytes
-    size = Column(Integer, nullable=False)
+    size = Column(BigInteger, nullable=False)
 
     # soft delete - we don't actually remove files right away
     is_deleted = Column(Boolean, default=False)
