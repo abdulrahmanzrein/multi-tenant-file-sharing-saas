@@ -1,6 +1,11 @@
 # File Sharing SaaS — Backend
 
-A multi-tenant REST API for secure file sharing, built with FastAPI and PostgreSQL.
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-supported-336791?style=flat-square&logo=postgresql)
+![Tests](https://img.shields.io/badge/tests-17%20passing-brightgreen?style=flat-square)
+
+A backend API for multi-tenant file sharing — each organization gets its own isolated workspace, storage quota, and users. Built to learn and demonstrate real-world SaaS backend patterns.
 
 ## Features
 
