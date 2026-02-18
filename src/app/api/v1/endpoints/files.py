@@ -19,17 +19,31 @@ def upload_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Upload a file.
+    # Step 1: check storage limit (YOUR CODE — fixed indentation and storage_limit reference)
+    if user.tenant.storage_used >= user.tenant.storage_limit:
+        raise HTTPException(status_code=413, detail="Tenant storage is maxed out")
 
-    TODO:
-    1. Check if tenant has storage space left (user.tenant.storage_used vs storage_limit)
-    2. Call storage_service.save_file(upload, user.tenant_id) — returns (storage_path, file_size)
-    3. Create a File(...) DB record with the metadata
-    4. Update tenant.storage_used += file_size
-    5. db.commit() and db.refresh(), then return the file record
-    """
-    pass
+    # Step 2: save file to disk (YOUR CODE — fixed the unpacking)
+    storage_path, file_size = storage_service.save_file(upload, user.tenant_id)
+
+    # Step 3: create the DB record
+    db_file = File(
+        original_filename=upload.filename or "unnamed",
+        storage_path=storage_path,
+        content_type=upload.content_type or "application/octet-stream",
+        size=file_size,
+        owner_id=user.id,
+        tenant_id=user.tenant_id,
+    )
+    db.add(db_file)
+
+    # Step 4: update tenant storage
+    user.tenant.storage_used += file_size
+
+    # Step 5: commit and return
+    db.commit()
+    db.refresh(db_file)
+    return db_file
 
 
 @router.get("/", response_model=list[FileRead])
@@ -37,14 +51,11 @@ def list_files(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    List all non-deleted files for the current user's tenant.
-
-    TODO:
-    1. Query File where tenant_id == user.tenant_id and is_deleted == False
-    2. Return the results
-    """
-    pass
+    files = db.query(File).filter(
+        File.tenant_id == user.tenant_id,
+        File.is_deleted == False,
+    ).all()
+    return files
 
 
 @router.get("/{file_id}", response_model=FileRead)
@@ -53,15 +64,16 @@ def get_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Get file metadata by ID.
+    db_file = db.query(File).filter(
+        File.id == file_id,
+        File.tenant_id == user.tenant_id,
+        File.is_deleted == False,
+    ).first()
 
-    TODO:
-    1. Query File by file_id, scoped to user's tenant, not deleted
-    2. If not found, raise 404
-    3. Return the file record
-    """
-    pass
+    if not db_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return db_file
 
 
 @router.get("/{file_id}/download")
@@ -70,15 +82,25 @@ def download_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Download the actual file.
+    db_file = db.query(File).filter(
+        File.id == file_id,
+        File.tenant_id == user.tenant_id,
+        File.is_deleted == False,
+    ).first()
 
-    TODO:
-    1. Look up the File record (same query as get_file)
-    2. Call storage_service.get_file_path(db_file.storage_path) to get the disk path
-    3. Return FileResponse(path=..., filename=db_file.original_filename, media_type=db_file.content_type)
-    """
-    pass
+    if not db_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        file_path = storage_service.get_file_path(db_file.storage_path)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    return FileResponse(
+        path=file_path,
+        filename=db_file.original_filename,
+        media_type=db_file.content_type,
+    )
 
 
 @router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -87,15 +109,21 @@ def delete_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Soft-delete a file.
+    db_file = db.query(File).filter(
+        File.id == file_id,
+        File.tenant_id == user.tenant_id,
+        File.is_deleted == False,
+    ).first()
 
-    TODO:
-    1. Look up the File record (scoped to tenant, not already deleted)
-    2. Check db_file.owner_id == user.id (only owner can delete)
-    3. Call storage_service.delete_file(db_file.storage_path) to remove from disk
-    4. Set db_file.is_deleted = True
-    5. Subtract the file size from tenant.storage_used
-    6. db.commit()
-    """
-    pass
+    if not db_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    if db_file.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Not allowed to delete this file")
+
+    storage_service.delete_file(db_file.storage_path)
+
+    db_file.is_deleted = True
+    user.tenant.storage_used -= db_file.size
+
+    db.commit()
