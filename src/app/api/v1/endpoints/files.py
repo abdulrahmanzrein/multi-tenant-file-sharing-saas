@@ -19,14 +19,14 @@ def upload_file(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Step 1: check storage limit (YOUR CODE — fixed indentation and storage_limit reference)
+    
     if user.tenant.storage_used >= user.tenant.storage_limit:
         raise HTTPException(status_code=413, detail="Tenant storage is maxed out")
 
-    # Step 2: save file to disk (YOUR CODE — fixed the unpacking)
+    
     storage_path, file_size = storage_service.save_file(upload, user.tenant_id)
 
-    # Step 3: create the DB record
+
     db_file = File(
         original_filename=upload.filename or "unnamed",
         storage_path=storage_path,
@@ -37,10 +37,10 @@ def upload_file(
     )
     db.add(db_file)
 
-    # Step 4: update tenant storage
+    
     user.tenant.storage_used += file_size
 
-    # Step 5: commit and return
+    
     db.commit()
     db.refresh(db_file)
     return db_file

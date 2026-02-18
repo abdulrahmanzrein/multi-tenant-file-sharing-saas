@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
@@ -74,7 +76,7 @@ def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
 
     # Step 3: Make sure the user still exists and is active
     user_id = payload.get("sub")
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == UUID(user_id)).first()
 
     if not user or not user.is_active:
         raise HTTPException(

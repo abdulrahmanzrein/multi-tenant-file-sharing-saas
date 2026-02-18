@@ -22,7 +22,7 @@ def save_file(upload: UploadFile, tenant_id: uuid.UUID) -> tuple[str, int]:
     tenant_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate a unique filename but keep the original extension
-    # "report.pdf" -> "a1b2c3d4.pdf"
+
     original_name = upload.filename or "unnamed"
     extension = Path(original_name).suffix  # e.g. ".pdf"
     unique_name = f"{uuid.uuid4()}{extension}"

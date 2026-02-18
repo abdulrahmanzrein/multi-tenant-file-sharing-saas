@@ -1,71 +1,78 @@
-# File Sharing SaaS Backend
+# File Sharing SaaS — Backend
 
-This project is a multi-tenant SaaS backend for secure, permissioned file sharing.
+A multi-tenant REST API for secure file sharing, built with FastAPI and PostgreSQL.
 
-## Goal
-Learn and demonstrate real-world backend architecture:
-- multi-tenancy
-- role-based access control
-- file collaboration
+## Features
 
-## Status
-Initial setup - skeleton structure created.
+- **Multi-tenancy** — users and files are fully isolated per tenant, with per-tenant storage quotas
+- **JWT auth** — access + refresh token flow, bcrypt password hashing
+- **File management** — upload, download, list, soft delete with storage tracking
+- **Role-based users** — `admin` / `member` roles per tenant
+
+## Tech Stack
+
+- FastAPI, SQLAlchemy 2, PostgreSQL, Alembic
+- python-jose (JWT), passlib/bcrypt (passwords)
+- pytest + httpx (tests run against SQLite in-memory)
 
 ## Project Structure
 
 ```
 src/
-├── main.py                    # FastAPI entry point
+├── main.py
 └── app/
-    ├── api/v1/               # API version 1
-    │   ├── router.py         # Main API router
-    │   └── endpoints/        # Route handlers
-    │       ├── auth.py       # Authentication endpoints
-    │       ├── users.py      # User management
-    │       ├── tenants.py    # Tenant management
-    │       └── files.py      # File operations
-    ├── core/                 # Core functionality (config, security, deps)
-    ├── db/                   # Database (session, base)
-    ├── models/               # SQLAlchemy models
-    ├── schemas/              # Pydantic schemas
-    ├── services/             # Business logic
-    ├── middleware/           # Custom middleware
-    └── utils/                # Helper functions
+    ├── api/v1/endpoints/   # auth, users, tenants, files
+    ├── core/               # config, security, deps
+    ├── db/                 # session, base model
+    ├── models/             # SQLAlchemy models
+    ├── schemas/            # Pydantic schemas
+    └── services/           # storage service
+tests/
+    ├── conftest.py         # SQLite test DB + fixtures
+    ├── test_auth.py
+    ├── test_users.py
+    └── test_files.py
 ```
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/v1/auth/register` | Register a new user |
+| POST | `/api/v1/auth/login` | Login, get JWT tokens |
+| POST | `/api/v1/auth/refresh` | Refresh access token |
+| GET | `/api/v1/users/me` | Get current user |
+| PUT | `/api/v1/users/me` | Update profile |
+| DELETE | `/api/v1/users/me` | Deactivate account |
+| POST | `/api/v1/tenants/` | Create a tenant |
+| GET | `/api/v1/tenants/{id}` | Get tenant by ID |
+| POST | `/api/v1/files/upload` | Upload a file |
+| GET | `/api/v1/files/` | List tenant files |
+| GET | `/api/v1/files/{id}` | Get file metadata |
+| GET | `/api/v1/files/{id}/download` | Download file |
+| DELETE | `/api/v1/files/{id}` | Delete file |
 
 ## Setup
 
-1. **Create virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+cp .env.example .env
+# edit .env with your database credentials
 
-3. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
-   ```
+cd src
+uvicorn main:app --reload
+```
 
-4. **Run the server:**
-   ```bash
-   cd src
-   uvicorn main:app --reload
-   ```
+Swagger UI: http://localhost:8000/docs
 
-5. **View API docs:**
-   - Swagger UI: http://localhost:8000/docs
-   - ReDoc: http://localhost:8000/redoc
+## Running Tests
 
-## Next Steps
+```bash
+pip install -r requirements.txt
+pytest
+```
 
-- Implement database models in `app/models/`
-- Create Pydantic schemas in `app/schemas/`
-- Set up database connection in `app/db/`
-- Add JWT authentication in `app/core/security.py`
-- Implement endpoint logic in `app/api/v1/endpoints/`
+Tests use an in-memory SQLite database — no PostgreSQL required to run them.
