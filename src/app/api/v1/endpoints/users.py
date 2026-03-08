@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.core.deps import get_db, get_current_user
 from app.models.user import User
 from app.schemas.user import UserRead, UserUpdate
+from app.services import user_service
 
 router = APIRouter()
 
@@ -16,26 +17,11 @@ def get_me(user: User = Depends(get_current_user)):
 @router.put("/me", response_model = UserRead)
 def update_me(updates: UserUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Update current user profile"""
-
-    if updates.full_name is not None:
-        user.full_name = updates.full_name
-    
-    if updates.email is not None:
-        existing = db.query(User).filter(User.email == updates.email, User.id != user.id).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="Email already taken")
-    
-        user.email = updates.email
-
-    db.commit()
-    db.refresh(user)
-
-    return user
+    return user_service.update_user(db, user, updates)
     
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 def delete_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete current user account"""
-    user.is_active = False
-    db.commit()
+    user_service.delete_user(db, user)
