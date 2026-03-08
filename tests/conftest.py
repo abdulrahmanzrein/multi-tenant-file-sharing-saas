@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.core.deps import get_db
+from app.models.tenant import Tenant
 from main import app
 
 engine = create_engine(
@@ -43,8 +44,16 @@ def client(tmp_path):
 
 @pytest.fixture
 def tenant(client):
-    res = client.post("/api/v1/tenants/", json={"name": "Test Co", "slug": "test-co"})
-    return res.json()
+    # Create tenant directly in DB — bypasses API auth, which is correct for test setup
+    db = TestingSessionLocal()
+    try:
+        t = Tenant(name="Test Co", slug="test-co")
+        db.add(t)
+        db.commit()
+        db.refresh(t)
+        return {"id": str(t.id), "name": t.name, "slug": t.slug}
+    finally:
+        db.close()
 
 
 @pytest.fixture

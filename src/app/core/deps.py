@@ -1,10 +1,8 @@
 import uuid
-
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
-
 from app.db.session import SessionLocal
 from app.core.security import decode_token
 from app.models.user import User
@@ -64,4 +62,24 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         )
 
     # Step 4: Return the user object — the endpoint receives this
+    return user
+
+
+def get_current_tenant(user: User = Depends(get_current_user)):
+    tenant = user.tenant
+    if not tenant or not tenant.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tenant not found or inactive",
+        )
+
+    return tenant
+
+def require_admin(user: User = Depends(get_current_user)):
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required",
+        )
+
     return user

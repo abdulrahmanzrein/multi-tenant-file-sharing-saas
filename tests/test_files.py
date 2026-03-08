@@ -1,4 +1,6 @@
 import io
+from app.models.tenant import Tenant
+from tests.conftest import TestingSessionLocal
 
 
 def test_upload_file(client, auth_headers):
@@ -72,13 +74,22 @@ def test_file_tenant_isolation(client, tenant, auth_headers):
     )
     file_id = upload.json()["id"]
 
-    tenant2 = client.post("/api/v1/tenants/", json={"name": "Other Co", "slug": "other-co"}).json()
+    db = TestingSessionLocal()
+    try:
+        t2 = Tenant(name="Other Co", slug="other-co")
+        db.add(t2)
+        db.commit()
+        db.refresh(t2)
+        tenant2_id = str(t2.id)
+    finally:
+        db.close()
+
     client.post("/api/v1/auth/register", json={
         "email": "other@example.com",
         "password": "pass123",
         "full_name": "Other User",
         "role": "member",
-        "tenant_id": tenant2["id"],
+        "tenant_id": tenant2_id,
     })
     login2 = client.post("/api/v1/auth/login", json={"email": "other@example.com", "password": "pass123"})
     headers2 = {"Authorization": f"Bearer {login2.json()['access_token']}"}
