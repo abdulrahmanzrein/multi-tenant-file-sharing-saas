@@ -45,8 +45,8 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
 
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    access_token = create_access_token(data={"sub": str(user.id), "tenant_id": str(user.tenant_id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id), "tenant_id": str(user.tenant_id)})
 
     return Token(access_token=access_token, refresh_token=refresh_token)
 
@@ -85,7 +85,7 @@ def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
         )
 
     # Step 4: Issue fresh tokens
-    new_access_token = create_access_token(data={"sub": str(user.id)})
-    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    new_access_token = create_access_token(data={"sub": str(user.id), "tenant_id": str(user.tenant_id)})
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id), "tenant_id": str(user.tenant_id)})
 
     return Token(access_token=new_access_token, refresh_token=new_refresh_token)
