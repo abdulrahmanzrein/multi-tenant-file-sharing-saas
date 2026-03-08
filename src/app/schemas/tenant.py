@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from datetime import datetime
 
@@ -20,5 +20,4 @@ class TenantRead(BaseModel):
     updated_at: datetime
 
 
-    class Config:
-        from_attributes = True  # tells Pydantic to read from SQLAlchemy models
+    model_config = ConfigDict(from_attributes=True)

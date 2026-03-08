@@ -4,10 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
 from app.core.security import hash_password, check_password, create_access_token, create_refresh_token, decode_token
+from app.models.tenant import Tenant
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
 from app.schemas.token import Token, LoginRequest, RefreshRequest
 from jose import JWTError
+
 
 router = APIRouter()
 
@@ -16,6 +18,10 @@ router = APIRouter()
 def register(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     existing_user = db.query(User).filter(User.email == user.email).first()
+    tenant = db.query(Tenant).filter(Tenant.id == user.tenant_id).first()
+
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
 
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
