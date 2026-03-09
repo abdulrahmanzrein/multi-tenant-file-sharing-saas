@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.file import File
 from app.models.user import User
 from app.services import storage_service
+from app.services import audit_service
 
 
 def upload_file(db: Session, user: User, upload: UploadFile) -> File:
@@ -32,6 +33,7 @@ def upload_file(db: Session, user: User, upload: UploadFile) -> File:
     
     db.commit()
     db.refresh(db_file)
+    audit_service.log_action(db, user.id, user.tenant_id, "file.upload", db_file.id)
     return db_file
 
 
@@ -73,6 +75,7 @@ def get_download_path(db: Session, user: User, file_id: UUID) -> tuple[str, File
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found on disk")
 
+    audit_service.log_action(db, user.id, user.tenant_id, "file.download", db_file.id)
     return file_path, db_file
 
 
@@ -95,3 +98,4 @@ def delete_file(db: Session, user: User, file_id: UUID) -> None:
     user.tenant.storage_used -= db_file.size
 
     db.commit()
+    audit_service.log_action(db, user.id, user.tenant_id, "file.delete", db_file.id)
