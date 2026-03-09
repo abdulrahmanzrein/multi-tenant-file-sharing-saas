@@ -10,12 +10,16 @@ from app.services import audit_service
 
 
 def upload_file(db: Session, user: User, upload: UploadFile) -> File:
-    if user.tenant.storage_used >= user.tenant.storage_limit:
+
+
+    storage_path, file_size = storage_service.storage.save_file(upload, user.tenant_id)
+
+    if user.tenant.storage_used + file_size > user.tenant.storage_limit:
+        storage_service.storage.delete_file(storage_path)
         raise HTTPException(status_code=413, detail="Tenant storage is maxed out")
 
     
-    storage_path, file_size = storage_service.storage.save_file(upload, user.tenant_id)
-
+    
 
     db_file = File(
         original_filename=upload.filename or "unnamed",
