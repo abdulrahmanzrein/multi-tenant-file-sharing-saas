@@ -34,10 +34,9 @@ def upload_file(db: Session, user: User, upload: UploadFile) -> File:
     
     user.tenant.storage_used += file_size
 
-    
+    audit_service.log_action(db, user.id, user.tenant_id, "file.upload", db_file.id)
     db.commit()
     db.refresh(db_file)
-    audit_service.log_action(db, user.id, user.tenant_id, "file.upload", db_file.id)
     return db_file
 
 
@@ -80,6 +79,7 @@ def get_download_path(db: Session, user: User, file_id: UUID) -> tuple[str, File
         raise HTTPException(status_code=404, detail="File not found on disk")
 
     audit_service.log_action(db, user.id, user.tenant_id, "file.download", db_file.id)
+    db.commit()
     return file_path, db_file
 
 
@@ -101,5 +101,5 @@ def delete_file(db: Session, user: User, file_id: UUID) -> None:
     db_file.is_deleted = True
     user.tenant.storage_used -= db_file.size
 
-    db.commit()
     audit_service.log_action(db, user.id, user.tenant_id, "file.delete", db_file.id)
+    db.commit()
