@@ -12,3 +12,9 @@ class FileRead(BaseModel):
     owner_id: UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedFiles(BaseModel):
+    total: int
+    items: list[FileRead]
+
+    

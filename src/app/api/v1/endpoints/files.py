@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_current_user
 from app.models.user import User
-from app.schemas.file import FileRead
+from app.schemas.file import FileRead, PaginatedFiles
 from app.services import file_service
 
 router = APIRouter()
@@ -22,12 +22,15 @@ def upload_file(
 
 
 
-@router.get("/", response_model=list[FileRead])
+@router.get("/", response_model=PaginatedFiles)
 def list_files(
+    skip: int = 0,
+    limit: int = 20,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return file_service.list_files(db, user)
+    items, total = file_service.list_files(db, user, skip, limit)
+    return {"total": total, "items": items}
 
 
 @router.get("/{file_id}", response_model=FileRead)

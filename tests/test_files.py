@@ -22,7 +22,8 @@ def test_list_files(client, auth_headers):
     )
     res = client.get("/api/v1/files/", headers=auth_headers)
     assert res.status_code == 200
-    assert len(res.json()) == 1
+    assert res.json()["total"] == 1
+    assert len(res.json()["items"]) == 1
 
 
 def test_get_file(client, auth_headers):
