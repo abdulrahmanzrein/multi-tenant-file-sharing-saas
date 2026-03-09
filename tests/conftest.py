@@ -34,8 +34,10 @@ def client(tmp_path):
     original_upload_dir = config.settings.UPLOAD_DIR
     config.settings.UPLOAD_DIR = tmp_path
 
+    app.state.limiter.enabled = False
     with TestClient(app) as c:
         yield c
+    app.state.limiter.enabled = True
 
     config.settings.UPLOAD_DIR = original_upload_dir
     app.dependency_overrides.clear()

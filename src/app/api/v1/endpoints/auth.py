@@ -1,7 +1,9 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
+
+from app.core.limiter import limiter
 from app.core.deps import get_db
 from app.core.security import hash_password, check_password, create_access_token, create_refresh_token, decode_token
 from app.models.tenant import Tenant
@@ -37,7 +39,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
     """Login and get JWT token"""
     user = db.query(User).filter(User.email == credentials.email).first()
 

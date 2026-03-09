@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_current_user
+from app.core.limiter import limiter
 from app.models.user import User
 from app.schemas.file import FileRead, PaginatedFiles
 from app.services import file_service
@@ -13,7 +14,9 @@ router = APIRouter()
 
 
 @router.post("/upload", response_model=FileRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("20/minute")
 def upload_file(
+    request: Request,
     upload: UploadFile,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
