@@ -44,6 +44,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if payload.get("type") == "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Cannot use refresh token as access token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+   
+
     # Step 2: Extract the user ID
     user_id = payload.get("sub")
     if not user_id:
