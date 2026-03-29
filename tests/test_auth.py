@@ -3,7 +3,6 @@ def test_register(client, tenant):
         "email": "new@example.com",
         "password": "pass123",
         "full_name": "New User",
-        "role": "member",
         "tenant_id": tenant["id"],
     })
     assert res.status_code == 200
@@ -15,7 +14,6 @@ def test_register_duplicate_email(client, tenant, registered_user):
         "email": "test@example.com",
         "password": "pass123",
         "full_name": "Duplicate",
-        "role": "member",
         "tenant_id": tenant["id"],
     })
     assert res.status_code == 400

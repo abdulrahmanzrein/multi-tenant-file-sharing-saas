@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -64,7 +65,6 @@ def registered_user(client, tenant):
         "email": "test@example.com",
         "password": "password123",
         "full_name": "Test User",
-        "role": "admin",
         "tenant_id": tenant["id"],
     })
     return {"email": "test@example.com", "password": "password123"}
@@ -75,3 +75,30 @@ def auth_headers(client, registered_user):
     res = client.post("/api/v1/auth/login", json=registered_user)
     token = res.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture
+def admin_user(client, tenant):
+    from app.core.security import hash_password
+    from app.models.user import User
+    db = TestingSessionLocal()
+    try:
+        u = User(
+            email="admin@example.com",
+            hashed_password=hash_password("adminpass"),
+            full_name="Admin User",
+            role="admin",
+            tenant_id=uuid.UUID(tenant["id"]),
+        )
+        db.add(u)
+        db.commit()
+    finally:
+        db.close()
+    return {"email": "admin@example.com", "password": "adminpass"}
+
+
+@pytest.fixture
+def admin_headers(client, admin_user):
+    res = client.post("/api/v1/auth/login", json=admin_user)
+    token = res.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+

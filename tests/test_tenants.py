@@ -26,13 +26,13 @@ def test_list_tenants_requires_admin(client, tenant):
     assert res.status_code == 403
 
 
-def test_list_tenants_as_admin(client, tenant, auth_headers):
-    res = client.get("/api/v1/tenants/", headers=auth_headers)
+def test_list_tenants_as_admin(client, tenant, admin_headers):
+    res = client.get("/api/v1/tenants/", headers=admin_headers)
     assert res.status_code == 200
 
 
-def test_get_own_tenant(client, tenant, auth_headers):
-    res = client.get(f"/api/v1/tenants/{tenant['id']}", headers=auth_headers)
+def test_get_own_tenant(client, tenant, admin_headers):
+    res = client.get(f"/api/v1/tenants/{tenant['id']}", headers=admin_headers)
     assert res.status_code == 200
     assert res.json()["id"] == tenant["id"]
 
